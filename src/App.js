@@ -1,25 +1,75 @@
-import logo from './logo.svg';
-import './App.css';
+import {useState, useEffect} from 'react';
+import Web3 from 'web3';
 
 function App() {
-  return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
-  );
+    const [isConnected, setIsConnected] = useState(false);
+    const [ethBalance, setEthbalance] = useState("");
+
+    const detectCurrentProvider = () => {
+      let provider;
+      if (window.ethereum){
+        provider = window.ethereum;
+      }else if (window.web3){
+        provider = window.web3.currentProvider;
+      }else{
+        console.log("Non-ethereum browser detected. You should install Metamask.");
+      }
+      return provider;
+    };
+
+    const onConnect = async () => {
+      try{
+        const currentProvider = detectCurrentProvider();
+        if(currentProvider){
+          await currentProvider.request({method: 'eth_requestAccounts'});
+          const web3 = new Web3(currentProvider);
+          const userAccount = await web3.eth.getAccounts();
+          const account = userAccount[0];
+          alert(account);
+          let ethBalance = await web3.eth.getBalance(account);
+          setIsConnected(true);
+          setEthbalance(ethBalance);
+        }
+      }catch(error){
+        console.log(error);
+      }
+    };
+
+    const onDisconnect = () => {
+      setIsConnected(false);
+    };
+
+    return (
+      <div className = "app">
+        <div className = "app-header">
+          <h1> React dApp Authentication with React, Web3.js and Metamask </h1>
+        </div>
+        <div className = "app-wrapper">
+          {!isConnected && (
+            <div> 
+              <button className = "app-button__login" onClick = {onConnect}>
+                Login
+              </button>
+            </div>
+          )}
+        </div>
+
+        {isConnected && (
+          <div className = "app-wrapper">
+            <div className = "app-details">
+              <h2> You are connected to metamask!</h2>
+              <div className = "app-balance">
+                <span>Balance:</span>
+                {ethBalance}
+              </div>
+              <button className = "app-button__logout" onClick = {onDisconnect}>
+                logout
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+    );
 }
 
 export default App;
